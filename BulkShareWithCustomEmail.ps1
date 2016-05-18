@@ -22,7 +22,9 @@ Add-Type -Path "$csomPath\Microsoft.SharePoint.Client.Runtime.dll"
 $clientContext = New-Object Microsoft.SharePoint.Client.ClientContext($url) 
 $clientContext.Credentials = $spoCredentials 
 
-If (!$clientContext.ServerObjectIsNull.Value) { 
+If ($clientContext.ServerObjectIsNull.Value) { 
+    Write-Error "Could not connect to SharePoint Online site collection: $url"
+} Else {
     Write-Host "Connected to SharePoint Online site collection: " $url -ForegroundColor Green        
                 
     $web = $clientContext.Web
