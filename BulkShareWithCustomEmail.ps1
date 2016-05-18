@@ -22,15 +22,19 @@ Add-Type -Path "$csomPath\Microsoft.SharePoint.Client.Runtime.dll"
 $clientContext = New-Object Microsoft.SharePoint.Client.ClientContext($url) 
 $clientContext.Credentials = $spoCredentials 
 
-if (!$clientContext.ServerObjectIsNull.Value) { 
-        Write-Host "Connected to SharePoint Online site collection: " $url -ForegroundColor Green        
+If (!$clientContext.ServerObjectIsNull.Value) { 
+    Write-Host "Connected to SharePoint Online site collection: " $url -ForegroundColor Green        
                 
-        $web = $clientContext.Web
-        $clientContext.Load($web)
-        $clientContext.Load($web.SiteGroups)
-        $clientContext.ExecuteQuery()
+    $web = $clientContext.Web
+    $clientContext.Load($web)
+    $clientContext.Load($web.SiteGroups)
+    $clientContext.ExecuteQuery()
 
-        $web.SiteGroups | ? { $_.Title -eq $groupTitle } | % {
+    $myGroups = $web.SiteGroups | ? { $_.Title -eq $groupTitle }
+    If ($myGroups.Count -eq 0) { 
+        Write-Error "Group, $groupTitle, was not found." 
+    } Else {
+        $myGroups | % {
             $groupNumber = $_.Id
             Write-Host "Found ID for `"$groupTitle`": " $groupNumber -ForegroundColor Green        
             $usersCSV | % {
@@ -50,4 +54,5 @@ if (!$clientContext.ServerObjectIsNull.Value) {
                 Send-MailMessage -To $email -From $username -Subject $emailSubject -Body $emailBody -BodyAsHtml -SmtpServer smtp.office365.com -UseSsl -Credential $psCredentials -Port 587
             }
         }
+    }
 }
