@@ -1,7 +1,6 @@
 [CmdletBinding()]
 Param(
     [Parameter(Mandatory=$true)][string]$url, 
-    [Parameter(Mandatory=$true)][string]$domain, 
     [Parameter(Mandatory=$true)][string]$groupTitle,
     [Parameter(Mandatory=$true)][string]$csvFile,
     [Parameter(Mandatory=$true)][string]$csomPath
@@ -13,6 +12,8 @@ $psCredentials = Get-Credential
 $spoCredentials = New-Object Microsoft.SharePoint.Client.SharePointOnlineCredentials($psCredentials.UserName, $psCredentials.Password)
 
 $usersCSV = Import-CSV $csvFile
+
+$domain = ([System.Uri]$myUrl).Host
 
 # the path here may need to change if you used e.g. C:\Lib.. 
 Add-Type -Path "$csomPath\Microsoft.SharePoint.Client.dll" 
