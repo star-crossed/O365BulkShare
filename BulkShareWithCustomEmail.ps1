@@ -49,6 +49,8 @@ $psCredentials = Get-Credential
 $spoCredentials = New-Object Microsoft.SharePoint.Client.SharePointOnlineCredentials($psCredentials.UserName, $psCredentials.Password)
 $clientContext = New-Object Microsoft.SharePoint.Client.ClientContext($Url) 
 $clientContext.Credentials = $spoCredentials 
+$me = $psCredentials.UserName.Replace("\", "/")
+$userDisplayName = ([adsi]"WinNT://$me,user").FullName 
 
 If ($clientContext.ServerObjectIsNull.Value) { 
     Write-Error "Could not connect to SharePoint Online site collection: $Url"
@@ -79,7 +81,7 @@ If ($clientContext.ServerObjectIsNull.Value) {
                     $email = $_.Email
 
                     Write-Host "Inviting user: " $email -ForegroundColor Green     
-                    $peoplePickerValue = "[{`"Key`":`"$email`",`"Description`":`"$email`",`"DisplayText`":`"$email`",`"EntityType`":`"`",`"ProviderDisplayName`":`"`",`"ProviderName`":`"`",`"IsResolved`":true,`"EntityData`":{`"Email`":`"$email`",`"SIPAddress`":`"$email`",`"SPUserID`":`"$email`",`"AccountName`":`"$email`",`"PrincipalType`":`"UNVALIDATED_EMAIL_ADDRESS`"},`"MultipleMatches`":[],`"AutoFillKey`":`"$email`",`"AutoFillDisplayText`":`"$email`",`"AutoFillSubDisplayText`":`"`",`"AutoFillTitleText`":`"$email\n$email`",`"DomainText`":`"$myDomain`",`"Resolved`":true}]"
+                    $peoplePickerValue = "[{`"Key`":`"$email`",`"Description`":`"$email`",`"DisplayText`":`"$email`",`"EntityType`":`"`",`"ProviderDisplayName`":`"`",`"ProviderName`":`"`",`"IsResolved`":true,`"EntityData`":{`"Email`":`"$email`",`"SIPAddress`":`"$email`",`"SPUserID`":`"$email`",`"AccountName`":`"$email`",`"PrincipalType`":`"UNVALIDATED_EMAIL_ADDRESS`"},`"MultipleMatches`":[],`"AutoFillKey`":`"$email`",`"AutoFillDisplayText`":`"$email`",`"AutoFillSubDisplayText`":`"`",`"AutoFillTitleText`":`"$email\n$email`",`"DomainText`":`"$domain`",`"Resolved`":true}]"
                     $sharingResult = [Microsoft.SharePoint.Client.Web]::ShareObject($clientContext, $Url, $peoplePickerValue, "group:$groupNumber", $groupNumber, $false, $false, $false, "", "")
                     $clientContext.Load($sharingResult)
                     $clientContext.ExecuteQuery()
@@ -87,8 +89,9 @@ If ($clientContext.ServerObjectIsNull.Value) {
                     Write-Host "Emailing user: " $email -ForegroundColor Green        
                     $invitationLink = $sharingResult.InvitedUsers[0].InvitationLink
                     $todaysDate = Get-Date -Format D
+                    $emailSubject = "Test subject"
                     $emailBody = "<h3 style=`"color: red`">Test HTML email</h3><a href=`"$invitationLink`">Click this link to accept the invitation.</a>"
-                    Send-MailMessage -To $email -From $username -Subject $emailSubject -Body $emailBody -BodyAsHtml -SmtpServer smtp.office365.com -UseSsl -Credential $psCredentials -Port 587
+                    Send-MailMessage -To $email -From "$userDisplayName <$username>" -Subject $emailSubject -Body $emailBody -BodyAsHtml -SmtpServer smtp.office365.com -UseSsl -Credential $psCredentials -Port 587
                 }
                 Write-Host "--- End of Batch ---"
                 Start-Sleep -Seconds $BatchInterval
