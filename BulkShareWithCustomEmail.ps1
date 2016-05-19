@@ -3,7 +3,9 @@ Param(
     [Parameter(Mandatory=$true, HelpMessage="This is the URL to the SharePoint Online site where you are inviting users.")][string]$Url, 
     [Parameter(Mandatory=$true, HelpMessage="This is the display name of the group on your SharePoint Online site where users will be added.")][string]$GroupTitle,
     [Parameter(Mandatory=$true, HelpMessage="This is the path to the CSV file that has a single column, Email, which contains each email address to be invited.")][string]$CSVFile,
-    [Parameter(Mandatory=$true, HelpMessage="This is the path to the DLLs for CSOM.")][string]$CSOMPath
+    [Parameter(Mandatory=$true, HelpMessage="This is the path to the DLLs for CSOM.")][string]$CSOMPath,
+    [Parameter(Mandatory=$true, HelpMessage="This is the number of email addresses to include in one batch.")][int]$BatchAmount,
+    [Parameter(Mandatory=$true, HelpMessage="This is the amount of seconds to wait between batches.")][int]$BatchInterval
 )
 
 Set-Strictmode -Version 1
@@ -40,21 +42,32 @@ If ($clientContext.ServerObjectIsNull.Value) {
         $myGroups | % {
             $groupNumber = $_.Id
             Write-Host "Found ID for `"$GroupTitle`": " $groupNumber -ForegroundColor Green        
-            $usersCSV | % {
-                $email = $_.Email
-                Write-Host "Inviting user: " $email -ForegroundColor Green        
-                $peoplePickerValue = "[{`"Key`":`"$email`",`"Description`":`"$email`",`"DisplayText`":`"$email`",`"EntityType`":`"`",`"ProviderDisplayName`":`"`",`"ProviderName`":`"`",`"IsResolved`":true,`"EntityData`":{`"Email`":`"$email`",`"SIPAddress`":`"$email`",`"SPUserID`":`"$email`",`"AccountName`":`"$email`",`"PrincipalType`":`"UNVALIDATED_EMAIL_ADDRESS`"},`"MultipleMatches`":[],`"AutoFillKey`":`"$email`",`"AutoFillDisplayText`":`"$email`",`"AutoFillSubDisplayText`":`"`",`"AutoFillTitleText`":`"$email\n$email`",`"DomainText`":`"$myDomain`",`"Resolved`":true}]"
-                $sharingResult = [Microsoft.SharePoint.Client.Web]::ShareObject($clientContext, $Url, $peoplePickerValue, "group:$groupNumber", $groupNumber, $false, $false, $false, "", "")
-                $clientContext.Load($sharingResult)
-                $clientContext.ExecuteQuery()
+            $i = 0
+            $usersCSV | % { 
+                Add-Member -InputObject $_ -MemberType NoteProperty -Name "Row" -Value $i; $i++ 
+            } 
+            $usersCSV | Group-Object { 
+                [System.Math]::Truncate($_.Row / $BatchAmount) 
+            } | % {
+                Write-Host "--- Start of Batch ---"
+                $_.Group | % { 
+                    $email = $_.Email
 
-                Write-Host "Emailing user: " $email -ForegroundColor Green        
-                $invitationLink = $sharingResult.InvitedUsers[0].InvitationLink
-                $todaysDate = Get-Date -Format D
-                $emailSubject = "Test subject"
-                $emailBody = "<h3 style=`"color: red`">Test HTML email</h3><a href=`"$invitationLink`">Click this link to accept the invitation.</a>"
+                    Write-Host "Inviting user(s): " $email -ForegroundColor Green     
+                    $peoplePickerValue = "[{`"Key`":`"$email`",`"Description`":`"$email`",`"DisplayText`":`"$email`",`"EntityType`":`"`",`"ProviderDisplayName`":`"`",`"ProviderName`":`"`",`"IsResolved`":true,`"EntityData`":{`"Email`":`"$email`",`"SIPAddress`":`"$email`",`"SPUserID`":`"$email`",`"AccountName`":`"$email`",`"PrincipalType`":`"UNVALIDATED_EMAIL_ADDRESS`"},`"MultipleMatches`":[],`"AutoFillKey`":`"$email`",`"AutoFillDisplayText`":`"$email`",`"AutoFillSubDisplayText`":`"`",`"AutoFillTitleText`":`"$email\n$email`",`"DomainText`":`"$myDomain`",`"Resolved`":true}]"
+                    $sharingResult = [Microsoft.SharePoint.Client.Web]::ShareObject($clientContext, $Url, $peoplePickerValue, "group:$groupNumber", $groupNumber, $false, $false, $false, "", "")
+                    $clientContext.Load($sharingResult)
+                    $clientContext.ExecuteQuery()
 
-                Send-MailMessage -To $email -From $username -Subject $emailSubject -Body $emailBody -BodyAsHtml -SmtpServer smtp.office365.com -UseSsl -Credential $psCredentials -Port 587
+                    Write-Host "Emailing user: " $email -ForegroundColor Green        
+                    $invitationLink = $sharingResult.InvitedUsers[0].InvitationLink
+                    $todaysDate = Get-Date -Format D
+                    $emailSubject = "Test subject"
+                    $emailBody = "<h3 style=`"color: red`">Test HTML email</h3><a href=`"$invitationLink`">Click this link to accept the invitation.</a>"
+                    Send-MailMessage -To $email -From $username -Subject $emailSubject -Body $emailBody -BodyAsHtml -SmtpServer smtp.office365.com -UseSsl -Credential $psCredentials -Port 587
+                }
+                Write-Host "--- End of Batch ---"
+                Start-Sleep -Seconds $BatchInterval
             }
         }
     }
