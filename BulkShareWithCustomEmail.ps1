@@ -14,8 +14,8 @@ Param(
     [Parameter(Mandatory=$true, ParameterSetName="UseCSV", HelpMessage="This is the path to the CSV file that has a single column, Email, which contains each email address to be invited.")]
     [string]$GroupTitle,
 
-    [Parameter(Mandatory=$true, ParameterSetName="UseEmail", HelpMessage="This is the email address to be invited.")]
-    [Parameter(Mandatory=$true, ParameterSetName="UseCSV", HelpMessage="This is the path to the CSV file that has a single column, Email, which contains each email address to be invited.")]
+    [Parameter(Mandatory=$false, ParameterSetName="UseEmail", HelpMessage="This is the email address to be invited.")]
+    [Parameter(Mandatory=$false, ParameterSetName="UseCSV", HelpMessage="This is the path to the CSV file that has a single column, Email, which contains each email address to be invited.")]
     [string]$CSOMPath,
 
     [Parameter(Mandatory=$true, ParameterSetName="UseCSV", HelpMessage="This is the number of email addresses to include in one batch.")]
@@ -26,6 +26,8 @@ Param(
 )
 
 Set-Strictmode -Version 1
+
+If ($CSOMPath -eq $null -or $CSOMPath -eq "") { $CSOMPath = "." }
 
 Add-Type -Path "$CSOMPath\Microsoft.SharePoint.Client.dll" 
 Add-Type -Path "$CSOMPath\Microsoft.SharePoint.Client.Runtime.dll" 
