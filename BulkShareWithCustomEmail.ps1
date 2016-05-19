@@ -6,16 +6,16 @@ Param(
     [Parameter(Mandatory=$true, Position=0, ParameterSetName="UseEmail", HelpMessage="This is the email address to be invited.")]
     [string]$UserEmail,
 
-    [Parameter(Mandatory=$true, ParameterSetName="UseEmail", HelpMessage="This is the email address to be invited.")]
-    [Parameter(Mandatory=$true, ParameterSetName="UseCSV", HelpMessage="This is the path to the CSV file that has a single column, Email, which contains each email address to be invited.")]
+    [Parameter(Mandatory=$true, ParameterSetName="UseEmail", HelpMessage="This is the URL to the SharePoint Online site where you are inviting users.")]
+    [Parameter(Mandatory=$true, ParameterSetName="UseCSV", HelpMessage="This is the URL to the SharePoint Online site where you are inviting users.")]
     [string]$Url, 
 
-    [Parameter(Mandatory=$true, ParameterSetName="UseEmail", HelpMessage="This is the email address to be invited.")]
-    [Parameter(Mandatory=$true, ParameterSetName="UseCSV", HelpMessage="This is the path to the CSV file that has a single column, Email, which contains each email address to be invited.")]
+    [Parameter(Mandatory=$true, ParameterSetName="UseEmail", HelpMessage="This is the display name of the group on your SharePoint Online site where users will be added.")]
+    [Parameter(Mandatory=$true, ParameterSetName="UseCSV", HelpMessage="This is the display name of the group on your SharePoint Online site where users will be added.")]
     [string]$GroupTitle,
 
-    [Parameter(Mandatory=$false, ParameterSetName="UseEmail", HelpMessage="This is the email address to be invited.")]
-    [Parameter(Mandatory=$false, ParameterSetName="UseCSV", HelpMessage="This is the path to the CSV file that has a single column, Email, which contains each email address to be invited.")]
+    [Parameter(Mandatory=$false, ParameterSetName="UseEmail", HelpMessage="This is the path to the DLLs for CSOM.")]
+    [Parameter(Mandatory=$false, ParameterSetName="UseCSV", HelpMessage="This is the path to the DLLs for CSOM.")]
     [string]$CSOMPath,
 
     [Parameter(Mandatory=$true, ParameterSetName="UseCSV", HelpMessage="This is the number of email addresses to include in one batch.")]
