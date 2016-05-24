@@ -6,34 +6,49 @@ Param(
     [Parameter(Mandatory=$true, Position=0, ParameterSetName="UseEmail", HelpMessage="This is the email address to be invited.")]
     [string]$UserEmail,
 
-    [Parameter(Mandatory=$true, ParameterSetName="UseEmail", HelpMessage="This is the URL to the SharePoint Online site where you are inviting users.")]
-    [Parameter(Mandatory=$true, ParameterSetName="UseCSV", HelpMessage="This is the URL to the SharePoint Online site where you are inviting users.")]
+    [Parameter(Mandatory=$false, ParameterSetName="UseEmail", HelpMessage="This is the URL to the SharePoint Online site where you are inviting users.")]
+    [Parameter(Mandatory=$false, ParameterSetName="UseCSV", HelpMessage="This is the URL to the SharePoint Online site where you are inviting users.")]
     [string]$Url, 
 
-    [Parameter(Mandatory=$true, ParameterSetName="UseEmail", HelpMessage="This is the display name of the group on your SharePoint Online site where users will be added.")]
-    [Parameter(Mandatory=$true, ParameterSetName="UseCSV", HelpMessage="This is the display name of the group on your SharePoint Online site where users will be added.")]
+    [Parameter(Mandatory=$false, ParameterSetName="UseEmail", HelpMessage="This is the display name of the group on your SharePoint Online site where users will be added.")]
+    [Parameter(Mandatory=$false, ParameterSetName="UseCSV", HelpMessage="This is the display name of the group on your SharePoint Online site where users will be added.")]
     [string]$GroupTitle,
 
     [Parameter(Mandatory=$false, ParameterSetName="UseEmail", HelpMessage="This is the path to the DLLs for CSOM.")]
     [Parameter(Mandatory=$false, ParameterSetName="UseCSV", HelpMessage="This is the path to the DLLs for CSOM.")]
     [string]$CSOMPath,
 
-    [Parameter(Mandatory=$true, ParameterSetName="UseCSV", HelpMessage="This is the number of email addresses to include in one batch.")]
+    [Parameter(Mandatory=$false, ParameterSetName="UseEmail", HelpMessage="This is the subject of the email that is sent to the users being invited.")]
+    [Parameter(Mandatory=$false, ParameterSetName="UseCSV", HelpMessage="This is the subject of the email that is sent to the users being invited.")]
+    [string]$EmailSubject,
+
+    [Parameter(Mandatory=$false, ParameterSetName="UseEmail", HelpMessage="This is the path to the HTML file containing the body of the email sent to the users being invited.")]
+    [Parameter(Mandatory=$false, ParameterSetName="UseCSV", HelpMessage="This is the path to the HTML file containing the body of the email sent to the users being invited.")]
+    [string]$EmailBodyFile,
+
+
+    [Parameter(Mandatory=$false, ParameterSetName="UseCSV", HelpMessage="This is the number of email addresses to include in one batch.")]
     [int]$BatchAmount,
 
-    [Parameter(Mandatory=$true, ParameterSetName="UseCSV", HelpMessage="This is the amount of seconds to wait between batches.")]
+    [Parameter(Mandatory=$false, ParameterSetName="UseCSV", HelpMessage="This is the amount of seconds to wait between batches.")]
     [int]$BatchInterval
 )
 
 Set-Strictmode -Version 1
 
 If ($CSOMPath -eq $null -or $CSOMPath -eq "") { $CSOMPath = "." }
+If ($GroupTitle -eq $null -or $GroupTitle -eq "") { $GroupTitle = "REDACTED" }
+If ($Url -eq $null -or $Url -eq "") { $Url = "REDACTED" }
+If ($EmailSubject -eq $null -or $EmailSubject -eq "") { $EmailSubject = "REDACTED" }
+If ($EmailBodyFile -eq $null -or $EmailBodyFile -eq "") { $EmailBodyFile = "REDACTED" }
 
 Add-Type -Path "$CSOMPath\Microsoft.SharePoint.Client.dll" 
 Add-Type -Path "$CSOMPath\Microsoft.SharePoint.Client.Runtime.dll" 
 
 If ($PSCmdlet.ParameterSetName -eq "UseCSV") {
     $usersCSV = Import-CSV $CSVFile
+    If ($BatchAmount -eq $null -or $BatchAmount -lt 0) { $BatchAmount = 30 }
+    If ($BatchInterval -eq $null -or $BatchInterval -lt 0) { $BatchInterval = 60 }
 } Else {
     $BatchAmount = 1
     $BatchInterval = 0
@@ -68,6 +83,11 @@ If ($clientContext.ServerObjectIsNull.Value) {
         $myGroups | % {
             $groupNumber = $_.Id
             Write-Host "Found ID for `"$GroupTitle`": " $groupNumber -ForegroundColor Green        
+
+            $EmailBodyTemplate = ""
+            Get-Content $EmailBodyFile | % { $EmailBodyTemplate += $_ }
+            Write-Host "Template, $EmailBodyFile, has been imported." -ForegroundColor Green        
+
             $i = 0
             $usersCSV | % { 
                 Add-Member -InputObject $_ -MemberType NoteProperty -Name "Row" -Value $i; $i++ 
@@ -88,9 +108,9 @@ If ($clientContext.ServerObjectIsNull.Value) {
                     Write-Host "Emailing user: " $email -ForegroundColor Green        
                     $invitationLink = $sharingResult.InvitedUsers[0].InvitationLink
                     $todaysDate = Get-Date -Format D
-                    $emailSubject = "Test subject"
-                    $emailBody = "<h3 style=`"color: red`">Test HTML email</h3><a href=`"$invitationLink`">Click this link to accept the invitation.</a>"
-                    Send-MailMessage -To $email -From $userName -Subject $emailSubject -Body $emailBody -BodyAsHtml -SmtpServer smtp.office365.com -UseSsl -Credential $psCredentials -Port 587
+
+                    $EmailBody = $EmailBodyTemplate.ToString().Replace("`$invitationLink", "$invitationLink").Replace("`$todaysDate", "$todaysDate")
+                    Send-MailMessage -To $email -From $userName -Subject $EmailSubject -Body $EmailBody -BodyAsHtml -SmtpServer smtp.office365.com -UseSsl -Credential $psCredentials -Port 587
                 }
                 Write-Host "--- End of Batch ---"
                 Start-Sleep -Seconds $BatchInterval
