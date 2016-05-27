@@ -47,8 +47,8 @@ Add-Type -Path "$CSOMPath\Microsoft.SharePoint.Client.Runtime.dll"
 
 If ($PSCmdlet.ParameterSetName -eq "UseCSV") {
     $usersCSV = Import-CSV $CSVFile
-    If ($BatchAmount -eq $null -or $BatchAmount -lt 0) { $BatchAmount = 30 }
-    If ($BatchInterval -eq $null -or $BatchInterval -lt 0) { $BatchInterval = 60 }
+    If ($BatchAmount -eq $null -or $BatchAmount -eq 0) { $BatchAmount = 30 }
+    If ($BatchInterval -eq $null -or $BatchInterval -eq 0) { $BatchInterval = 60 }
 } Else {
     $BatchAmount = 1
     $BatchInterval = 0
