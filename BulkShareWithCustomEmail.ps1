@@ -6,24 +6,24 @@ Param(
     [Parameter(Mandatory=$true, Position=0, ParameterSetName="UseEmail", HelpMessage="This is the email address to be invited.")]
     [string]$UserEmail,
 
-    [Parameter(Mandatory=$false, ParameterSetName="UseEmail", HelpMessage="This is the URL to the SharePoint Online site where you are inviting users.")]
-    [Parameter(Mandatory=$false, ParameterSetName="UseCSV", HelpMessage="This is the URL to the SharePoint Online site where you are inviting users.")]
+    [Parameter(Mandatory=$true, ParameterSetName="UseEmail", HelpMessage="This is the URL to the SharePoint Online site where you are inviting users.")]
+    [Parameter(Mandatory=$true, ParameterSetName="UseCSV", HelpMessage="This is the URL to the SharePoint Online site where you are inviting users.")]
     [string]$Url, 
 
-    [Parameter(Mandatory=$false, ParameterSetName="UseEmail", HelpMessage="This is the display name of the group on your SharePoint Online site where users will be added.")]
-    [Parameter(Mandatory=$false, ParameterSetName="UseCSV", HelpMessage="This is the display name of the group on your SharePoint Online site where users will be added.")]
+    [Parameter(Mandatory=$true, ParameterSetName="UseEmail", HelpMessage="This is the display name of the group on your SharePoint Online site where users will be added.")]
+    [Parameter(Mandatory=$true, ParameterSetName="UseCSV", HelpMessage="This is the display name of the group on your SharePoint Online site where users will be added.")]
     [string]$GroupTitle,
 
     [Parameter(Mandatory=$false, ParameterSetName="UseEmail", HelpMessage="This is the path to the DLLs for CSOM.")]
     [Parameter(Mandatory=$false, ParameterSetName="UseCSV", HelpMessage="This is the path to the DLLs for CSOM.")]
     [string]$CSOMPath,
 
-    [Parameter(Mandatory=$false, ParameterSetName="UseEmail", HelpMessage="This is the subject of the email that is sent to the users being invited.")]
-    [Parameter(Mandatory=$false, ParameterSetName="UseCSV", HelpMessage="This is the subject of the email that is sent to the users being invited.")]
+    [Parameter(Mandatory=$true, ParameterSetName="UseEmail", HelpMessage="This is the subject of the email that is sent to the users being invited.")]
+    [Parameter(Mandatory=$true, ParameterSetName="UseCSV", HelpMessage="This is the subject of the email that is sent to the users being invited.")]
     [string]$EmailSubject,
 
-    [Parameter(Mandatory=$false, ParameterSetName="UseEmail", HelpMessage="This is the path to the HTML file containing the body of the email sent to the users being invited.")]
-    [Parameter(Mandatory=$false, ParameterSetName="UseCSV", HelpMessage="This is the path to the HTML file containing the body of the email sent to the users being invited.")]
+    [Parameter(Mandatory=$true, ParameterSetName="UseEmail", HelpMessage="This is the path to the HTML file containing the body of the email sent to the users being invited.")]
+    [Parameter(Mandatory=$true, ParameterSetName="UseCSV", HelpMessage="This is the path to the HTML file containing the body of the email sent to the users being invited.")]
     [string]$EmailBodyFile,
 
 
@@ -36,15 +36,10 @@ Param(
 
 Set-Strictmode -Version 1
 
-If ($CSOMPath -eq $null -or $CSOMPath -eq "") { $CSOMPath = "." }
-If ($GroupTitle -eq $null -or $GroupTitle -eq "") { $GroupTitle = "REDACTED" }
-If ($Url -eq $null -or $Url -eq "") { $Url = "REDACTED" }
-If ($EmailSubject -eq $null -or $EmailSubject -eq "") { $EmailSubject = "REDACTED" }
-If ($EmailBodyFile -eq $null -or $EmailBodyFile -eq "") { $EmailBodyFile = "REDACTED" }
-
 Add-Type -Path "$CSOMPath\Microsoft.SharePoint.Client.dll" 
 Add-Type -Path "$CSOMPath\Microsoft.SharePoint.Client.Runtime.dll" 
 
+If ($CSOMPath -eq $null -or $CSOMPath -eq "") { $CSOMPath = "." }
 If ($PSCmdlet.ParameterSetName -eq "UseCSV") {
     $usersCSV = Import-CSV $CSVFile
     If ($BatchAmount -eq $null -or $BatchAmount -eq 0) { $BatchAmount = 30 }
