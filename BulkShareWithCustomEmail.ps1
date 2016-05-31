@@ -104,7 +104,7 @@ If ($clientContext.ServerObjectIsNull.Value) {
                     $invitationLink = $sharingResult.InvitedUsers[0].InvitationLink
                     $todaysDate = Get-Date -Format D
 
-                    $EmailBody = $EmailBodyTemplate.ToString().Replace("`$invitationLink", "$invitationLink").Replace("`$todaysDate", "$todaysDate")
+                    $EmailBody = $EmailBodyTemplate.ToString().Replace("`$invitationLink", "$invitationLink").Replace("`$todaysDate", "$todaysDate").Replace("`$EmailSubject", "$EmailSubject")
                     Send-MailMessage -To $email -From $userName -Subject $EmailSubject -Body $EmailBody -BodyAsHtml -SmtpServer smtp.office365.com -UseSsl -Credential $psCredentials -Port 587
                 }
                 Write-Host "--- End of Batch ---"
