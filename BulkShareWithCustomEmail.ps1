@@ -36,10 +36,10 @@ Param(
 
 Set-Strictmode -Version 1
 
+If ($CSOMPath -eq $null -or $CSOMPath -eq "") { $CSOMPath = "." }
 Add-Type -Path "$CSOMPath\Microsoft.SharePoint.Client.dll" 
 Add-Type -Path "$CSOMPath\Microsoft.SharePoint.Client.Runtime.dll" 
 
-If ($CSOMPath -eq $null -or $CSOMPath -eq "") { $CSOMPath = "." }
 If ($PSCmdlet.ParameterSetName -eq "UseCSV") {
     $usersCSV = Import-CSV $CSVFile
     If ($BatchAmount -eq $null -or $BatchAmount -eq 0) { $BatchAmount = 30 }
@@ -96,16 +96,20 @@ If ($clientContext.ServerObjectIsNull.Value) {
 
                     Write-Host "Inviting user: " $email -ForegroundColor Green     
                     $peoplePickerValue = "[{`"Key`":`"$email`",`"Description`":`"$email`",`"DisplayText`":`"$email`",`"EntityType`":`"`",`"ProviderDisplayName`":`"`",`"ProviderName`":`"`",`"IsResolved`":true,`"EntityData`":{`"SPUserID`":`"$email`",`"Email`":`"$email`",`"IsBlocked`":`"False`",`"PrincipalType`":`"UNVALIDATED_EMAIL_ADDRESS`",`"AccountName`":`"$email`",`"SIPAddress`":`"$email`"},`"MultipleMatches`":[],`"AutoFillKey`":`"$email`",`"AutoFillDisplayText`":`"$email`",`"AutoFillSubDisplayText`":`"`",`"AutoFillTitleText`":`"$email\n$email`",`"DomainText`":`"$domain`",`"Resolved`":true}]"
-                    $sharingResult = [Microsoft.SharePoint.Client.Web]::ShareObject($clientContext, $Url, $peoplePickerValue, "group:$groupNumber", $groupNumber, $false, $false, $false, "", "", $true)
+                    $sharingResult = [Microsoft.SharePoint.Client.Web]::ShareObject($clientContext, $Url, $peoplePickerValue, "group:$groupNumber", $groupNumber, $false, $false, $false, "", "")
                     $clientContext.Load($sharingResult)
                     $clientContext.ExecuteQuery()
 
-                    Write-Host "Emailing user: " $email -ForegroundColor Green        
-                    $invitationLink = $sharingResult.InvitedUsers[0].InvitationLink
-                    $todaysDate = Get-Date -Format D
+                    if ($sharingResult.InvitedUsers -ne $null) {
+                        Write-Host "Emailing user: " $email -ForegroundColor Green        
+                        $invitationLink = $sharingResult.InvitedUsers[0].InvitationLink
+                        $todaysDate = Get-Date -Format D
 
-                    $EmailBody = $EmailBodyTemplate.ToString().Replace("`$invitationLink", "$invitationLink").Replace("`$todaysDate", "$todaysDate").Replace("`$EmailSubject", "$EmailSubject")
-                    Send-MailMessage -To $email -From $userName -Subject $EmailSubject -Body $EmailBody -BodyAsHtml -SmtpServer smtp.office365.com -UseSsl -Credential $psCredentials -Port 587
+                        $EmailBody = $EmailBodyTemplate.ToString().Replace("`$invitationLink", "$invitationLink").Replace("`$todaysDate", "$todaysDate").Replace("`$EmailSubject", "$EmailSubject")
+                        Send-MailMessage -To $email -From $userName -Subject $EmailSubject -Body $EmailBody -BodyAsHtml -SmtpServer smtp.office365.com -UseSsl -Credential $psCredentials -Port 587
+                    } else {
+                        Write-Host "Could not share with $email" -ForegroundColor Red
+                    }
                 }
                 Write-Host "--- End of Batch ---"
                 Start-Sleep -Seconds $BatchInterval
