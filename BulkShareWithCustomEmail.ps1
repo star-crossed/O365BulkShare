@@ -96,7 +96,7 @@ If ($clientContext.ServerObjectIsNull.Value) {
 
                     Write-Host "Inviting user: " $email -ForegroundColor Green     
                     $peoplePickerValue = "[{`"Key`":`"$email`",`"Description`":`"$email`",`"DisplayText`":`"$email`",`"EntityType`":`"`",`"ProviderDisplayName`":`"`",`"ProviderName`":`"`",`"IsResolved`":true,`"EntityData`":{`"SPUserID`":`"$email`",`"Email`":`"$email`",`"IsBlocked`":`"False`",`"PrincipalType`":`"UNVALIDATED_EMAIL_ADDRESS`",`"AccountName`":`"$email`",`"SIPAddress`":`"$email`"},`"MultipleMatches`":[],`"AutoFillKey`":`"$email`",`"AutoFillDisplayText`":`"$email`",`"AutoFillSubDisplayText`":`"`",`"AutoFillTitleText`":`"$email\n$email`",`"DomainText`":`"$domain`",`"Resolved`":true}]"
-                    $sharingResult = [Microsoft.SharePoint.Client.Web]::ShareObject($clientContext, $Url, $peoplePickerValue, "group:$groupNumber", $groupNumber, $false, $false, $false, "", "")
+                    $sharingResult = [Microsoft.SharePoint.Client.Web]::ShareObject($clientContext, $Url, $peoplePickerValue, "group:$groupNumber", $groupNumber, $false, $false, $false, "", "", $true)
                     $clientContext.Load($sharingResult)
                     $clientContext.ExecuteQuery()
 
