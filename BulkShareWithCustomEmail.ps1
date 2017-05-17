@@ -71,27 +71,27 @@ If ($clientContext.ServerObjectIsNull.Value) {
     $clientContext.Load($web.SiteGroups)
     $clientContext.ExecuteQuery()
 
-    $myGroups = $web.SiteGroups | ? { $_.Title -eq $GroupTitle }
+    $myGroups = $web.SiteGroups | Where-Object { $_.Title -eq $GroupTitle }
     If ($myGroups.Count -eq 0) { 
         Write-Error "Group, $GroupTitle, was not found." 
     } Else {
-        $myGroups | % {
+        $myGroups | ForEach-Object {
             $groupNumber = $_.Id
             Write-Host "Found ID for `"$GroupTitle`": " $groupNumber -ForegroundColor Green        
 
             $EmailBodyTemplate = ""
-            Get-Content $EmailBodyFile | % { $EmailBodyTemplate += $_ }
+            Get-Content $EmailBodyFile | ForEach-Object { $EmailBodyTemplate += $_ }
             Write-Host "Template, $EmailBodyFile, has been imported." -ForegroundColor Green        
 
             $i = 0
-            $usersCSV | % { 
+            $usersCSV | ForEach-Object { 
                 Add-Member -InputObject $_ -MemberType NoteProperty -Name "Row" -Value $i; $i++ 
             } 
             $usersCSV | Group-Object { 
                 [System.Math]::Truncate($_.Row / $BatchAmount) 
-            } | % {
+            } | ForEach-Object {
                 Write-Host "--- Start of Batch ---"
-                $_.Group | % { 
+                $_.Group | ForEach-Object { 
                     $email = $_.Email
 
                     Write-Host "Inviting user: " $email -ForegroundColor Green     
